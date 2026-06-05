@@ -7,4 +7,4 @@ const redis = new Redis(
   }
 );
 
-export defau
+export default redis;
