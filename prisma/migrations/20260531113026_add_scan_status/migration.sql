@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Scan" ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'PENDING',
+ALTER COLUMN "result" DROP NOT NULL;
