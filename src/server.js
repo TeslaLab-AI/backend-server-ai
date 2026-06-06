@@ -10,6 +10,9 @@ import repoRoutes from "./routes/repo.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import "./jobs/scan.worker.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import githubRoutes from "./routes/github.routes.js";
+
+
 
 dotenv.config();
 
@@ -57,6 +60,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/repos", repoRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/payment",paymentRoutes);
+app.use("/api/github", githubRoutes);
 
 app.get("/", (req, res) => {
   res.send("AI Agent Server Running 🚀");
