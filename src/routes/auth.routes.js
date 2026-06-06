@@ -135,9 +135,9 @@ router.get(
 
   );
 
-  res.redirect(
-    "http://localhost:5173/dashboard"
-  );
+ res.redirect(
+  "https://teslalab-ai.vercel.app/dashboard"
+);
 
 }
 
