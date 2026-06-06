@@ -20,7 +20,8 @@ app.use(cors({
   origin:[
     "http://localhost:5173",
     // "https://teslalab-ai.vercel.app" ,
-   " https://authentication-czxg.vercel.app"
+  //  " https://authentication-czxg.vercel.app"
+  "https://authentication-czxg-pj9erh9dm-teslalabs-projects.vercel.app"
   ],
 
   credentials: true
