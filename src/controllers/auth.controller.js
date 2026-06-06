@@ -42,17 +42,17 @@ export const register = async (req, res) => {
         Math.random() * 900000
       ).toString();
 
-    await redis.set(
+    // await redis.set(
 
-      `otp:${email}`,
+    //   `otp:${email}`,
 
-      otp,
+    //   otp,
 
-      "EX",
+    //   "EX",
 
-      300
+    //   300
 
-    );
+    // );
 
     // await sendOtpEmail(
     //   email,
