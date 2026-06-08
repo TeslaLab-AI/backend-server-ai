@@ -2,6 +2,42 @@ import fs from "fs/promises";
 import { detectFramework }
 from "./frameworkDetector.service.js";
 
+import path from "path";
+
+async function getAllFiles(dir) {
+
+  let results = [];
+
+  const files =
+    await fs.readdir(dir);
+
+  for (const file of files) {
+
+    const fullPath =
+      path.join(dir, file);
+
+    const stat =
+      await fs.stat(fullPath);
+
+    if (stat.isDirectory()) {
+
+      const nested =
+        await getAllFiles(fullPath);
+
+      results.push(...nested);
+
+    } else {
+
+      results.push(fullPath);
+
+    }
+
+  }
+
+  return results;
+
+}
+
 export const scanPackageJson =
   async (repoPath) => {
 

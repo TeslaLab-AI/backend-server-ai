@@ -22,6 +22,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+
 router.post(
   "/register",
   register
@@ -86,6 +87,8 @@ router.get(
 );
 
 // GitHub Callback
+
+
 router.get(
 
   "/github/callback",
@@ -98,7 +101,14 @@ router.get(
     }
   ),
 
+ 
+
  async (req, res) => {
+
+  console.log(
+  "Callback User:",
+  req.user
+)
 
   const token = jwt.sign(
 

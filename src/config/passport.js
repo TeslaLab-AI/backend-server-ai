@@ -29,8 +29,7 @@ passport.use(
       profile,
       done
     ) => {
-     
-console.log("Access Token:", accessToken);
+
 
       try {
 
@@ -67,6 +66,9 @@ console.log("Access Token:", accessToken);
 
     });
 
+    console.log("GitHub Profile:", profile);
+console.log("Existing User:", user);
+
     console.log(
   "User After Update:",
   user
@@ -99,6 +101,11 @@ console.log("Access Token:", accessToken);
           null,
           user
         );
+
+          console.log(
+    "GitHub Auth Error:",
+    error
+  );
 
       } catch (error) {
 

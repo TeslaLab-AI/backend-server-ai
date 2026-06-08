@@ -7,4 +7,6 @@ const redis = new Redis(
   }
 );
 
+console.log("REDIS_URL:", process.env.REDIS_URL);
+
 export default redis;

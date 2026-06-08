@@ -32,32 +32,41 @@ export const register = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        isVerified: true
+        
       }
     });
 
-    // const otp =
-    //   Math.floor(
-    //     100000 +
-    //     Math.random() * 900000
-    //   ).toString();
+   
 
-    // await redis.set(
+    const otp =
+      Math.floor(
+        100000 +
+        Math.random() * 900000
+      ).toString();
 
-    //   `otp:${email}`,
+      console.log(otp);
+      
 
-    //   otp,
+    const storedOtp = await redis.set(
 
-    //   "EX",
+      `otp:${email}`,
 
-    //   300
+      otp,
 
-    // );
+      "EX",
 
-    // await sendOtpEmail(
-    //   email,
-    //   otp
-    // );
+      300
+
+    );
+
+    console.log( "check otp",storedOtp);
+
+   
+
+    await sendOtpEmail(
+      email,
+      otp
+    );
 
     res.status(201).json({
 
@@ -65,6 +74,8 @@ export const register = async (req, res) => {
         "User registered. OTP sent to email."
 
     });
+
+    console.log("Step 3: Email Sent");
 
   } catch (error) {
     console.log(error);
@@ -103,16 +114,16 @@ export const login = async (req, res) => {
 
     }
 
-//   //   if (!user.isVerified) {
+    if (!user.isVerified) {
 
-//   // return res.status(400).json({
+  return res.status(400).json({
 
-//   //   message:
-//   //     "Please verify your email first"
+    message:
+      "Please verify your email first"
 
-//   // });
+  });
 
-// }
+}
 
     // compare password
     const isMatch =
