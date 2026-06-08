@@ -146,7 +146,7 @@ router.get(
   );
 
  res.redirect(
-  "https://authentication-czxg.vercel.app/dashboard"
+   `https://authentication-czxg.vercel.app/dashboard?token=${token}`
 );
 
 }
