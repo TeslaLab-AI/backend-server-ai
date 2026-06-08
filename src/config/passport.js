@@ -19,7 +19,7 @@ passport.use(
         process.env.GITHUB_CLIENT_SECRET,
 
       callbackURL:
-        "http://localhost:3000/api/auth/github/callback"
+       process.env.GITHUB_CALLBACK_URL
 
     },
 
