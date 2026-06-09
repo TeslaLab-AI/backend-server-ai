@@ -1,4 +1,4 @@
-import brevo from "@getbrevo/brevo";
+import * as brevo from "@getbrevo/brevo";
 
 const apiInstance = new brevo.TransactionalEmailsApi();
 
@@ -17,11 +17,7 @@ export const sendOtpEmail = async (email, otp) => {
         name: "TeslaLab AI"
       },
 
-      to: [
-        {
-          email
-        }
-      ],
+      to: [{ email }],
 
       subject: "OTP Verification",
 
