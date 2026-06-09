@@ -1,42 +1,52 @@
-import * as brevo from "@getbrevo/brevo";
-
-const apiInstance = new brevo.TransactionalEmailsApi();
-
-apiInstance.setApiKey(
-  brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY
-);
-
 export const sendOtpEmail = async (email, otp) => {
   try {
 
-    await apiInstance.sendTransacEmail({
+    const response = await fetch(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        method: "POST",
 
-      sender: {
-        email: "teslalabai390@gmail.com",
-        name: "TeslaLab AI"
-      },
+        headers: {
+          "accept": "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json"
+        },
 
-      to: [{ email }],
+        body: JSON.stringify({
 
-      subject: "OTP Verification",
+          sender: {
+            name: "TeslaLab AI",
+            email: "teslalabai390@gmail.com"
+          },
 
-      htmlContent: `
-        <h2>Your OTP Verification Code</h2>
-        <h1>${otp}</h1>
-        <p>This OTP is valid for 5 minutes.</p>
-      `
+          to: [
+            {
+              email: email
+            }
+          ],
 
-    });
+          subject: "OTP Verification",
 
-    console.log("Email Sent Successfully");
+          htmlContent: `
+            <h2>Your OTP Verification Code</h2>
+            <h1>${otp}</h1>
+            <p>This OTP is valid for 5 minutes.</p>
+          `
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(JSON.stringify(data));
+    }
+
+    console.log("Email Sent Successfully:", data);
 
   } catch (error) {
 
-    console.log(
-      "Brevo API Error:",
-      error.response?.body || error.message
-    );
+    console.log("Brevo API Error:", error.message);
 
     throw error;
   }
