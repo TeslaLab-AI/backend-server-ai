@@ -32,7 +32,7 @@ export const sendOtpEmail = async (email, otp) => {
 
     const info = await transporter.sendMail({
 
-      from: `"TeslaLab AI" <${process.env.EMAIL_USER}>`,
+      from: `"TeslaLab AI" <teslalabai390@gmail.com>`,
 
       to: email,
 
