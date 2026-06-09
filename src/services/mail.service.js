@@ -1,69 +1,61 @@
 import nodemailer from "nodemailer";
 
-const transporter =
-  nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
 
-    host: "smtp.gmail.com",
+  host: process.env.EMAIL_HOST,
 
-    port: 587,
+  port: Number(process.env.EMAIL_PORT),
 
-    secure: false,
+  secure: false,
 
-    auth: {
+  auth: {
 
-      user:
-        process.env.EMAIL_USER,
+    user: process.env.EMAIL_USER,
 
-      pass:
-        process.env.EMAIL_PASS
+    pass: process.env.EMAIL_PASS
 
-    }
+  }
 
-  });
+});
 
-export const sendOtpEmail =
-  async (email, otp) => {
+export const sendOtpEmail = async (email, otp) => {
 
-    try {
+  try {
 
-      const info =
-        await transporter.sendMail({
+    const info = await transporter.sendMail({
 
-          from:
-            process.env.EMAIL_USER,
+      from: `"TeslaLab AI" <${process.env.EMAIL_USER}>`,
 
-          to:
-            email,
+      to: email,
 
-          subject:
-            "OTP Verification",
+      subject: "OTP Verification",
 
-          html: `
+      html: `
 
-            <h2>Your OTP</h2>
+        <h2>Your OTP Verification Code</h2>
 
-            <h1>${otp}</h1>
+        <h1>${otp}</h1>
 
-            <p>Valid for 5 minutes</p>
+        <p>This OTP is valid for 5 minutes.</p>
 
-          `
+      `
 
-        });
+    });
 
-      console.log(
-        "Email Sent:",
-        info.response
-      );
+    console.log(
+      "Email Sent:",
+      info.response
+    );
 
-    } catch (error) {
+  } catch (error) {
 
-      console.log(
-        "Email Error:",
-        error
-      );
+    console.log(
+      "Email Error:",
+      error.message
+    );
 
-      throw error;
+    throw error;
 
-    }
+  }
 
 };

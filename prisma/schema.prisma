@@ -8,58 +8,40 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-
-  name        String
-
-  email       String?  @unique
-
-  password    String?
-
-  githubId    String?  @unique
-
-  githubToken String?
-
-  isVerified Boolean @default(false)
-  
-  isPremium Boolean @default(false)
-
-  createdAt   DateTime @default(now())
-
-
+  id           Int          @id @default(autoincrement())
+  name         String
+  email        String?      @unique
+  password     String?
+  githubId     String?      @unique
+  githubToken  String?
+  isVerified   Boolean      @default(false)
+  isPremium    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
   repositories Repository[]
 }
 
 model Repository {
-  id         Int      @id @default(autoincrement())
-  repoUrl    String
-  framework  String?
-
-  status     String   @default("PENDING")
-
-  createdAt  DateTime @default(now())
-
-  userId     Int
-  user       User @relation(fields: [userId], references: [id])
-
-  scans      Scan[]
+  id        Int      @id @default(autoincrement())
+  repoUrl   String
+  framework String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  scans     Scan[]
 }
 
 model Scan {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   repositoryId Int
-
-  status       String   @default("PENDING")
-
+  status       String     @default("PENDING")
   result       Json?
-
-  createdAt    DateTime @default(now())
-
+  createdAt    DateTime   @default(now())
   repository   Repository @relation(fields: [repositoryId], references: [id])
 }
 
 model Payment {
-  id              Int @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   razorpayOrderId String
   amount          Int
   status          String
