@@ -1,78 +1,47 @@
-import nodemailer from "nodemailer";
+import brevo from "@getbrevo/brevo";
 
-const transporter = nodemailer.createTransport({
+const apiInstance = new brevo.TransactionalEmailsApi();
 
-  host: process.env.EMAIL_HOST,
-
-  port: Number(process.env.EMAIL_PORT),
-
-  secure: false,
-
-  requireTLS: true,
-
-  connectionTimeout: 30000,
-
-  greetingTimeout: 30000,
-
-  socketTimeout: 30000,
-
-  auth: {
-
-    user: process.env.EMAIL_USER,
-
-    pass: process.env.EMAIL_PASS
-
-  }
-
-});
-
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log("SMTP Verify Error:", error);
-  } else {
-    console.log("SMTP Server is ready");
-  }
-});
+apiInstance.setApiKey(
+  brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
 export const sendOtpEmail = async (email, otp) => {
-
   try {
 
-    const info = await transporter.sendMail({
+    await apiInstance.sendTransacEmail({
 
-      from: `"TeslaLab AI" <teslalabai390@gmail.com>`,
+      sender: {
+        email: "teslalabai390@gmail.com",
+        name: "TeslaLab AI"
+      },
 
-      to: email,
+      to: [
+        {
+          email
+        }
+      ],
 
       subject: "OTP Verification",
 
-      html: `
-
+      htmlContent: `
         <h2>Your OTP Verification Code</h2>
-
         <h1>${otp}</h1>
-
         <p>This OTP is valid for 5 minutes.</p>
-
       `
 
     });
 
-    console.log(
-      "Email Sent:",
-      info.response
-    );
+    console.log("Email Sent Successfully");
 
   } catch (error) {
 
     console.log(
-      "Email Error:",
-      error.message
+      "Brevo API Error:",
+      error.response?.body || error.message
     );
 
     throw error;
-
   }
-
 };
-
