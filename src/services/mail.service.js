@@ -26,6 +26,14 @@ const transporter = nodemailer.createTransport({
 
 });
 
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log("SMTP Verify Error:", error);
+  } else {
+    console.log("SMTP Server is ready");
+  }
+});
+
 export const sendOtpEmail = async (email, otp) => {
 
   try {
@@ -68,10 +76,3 @@ export const sendOtpEmail = async (email, otp) => {
 
 };
 
-console.log("EMAIL_HOST:", process.env.EMAIL_HOST);
-console.log("EMAIL_PORT:", process.env.EMAIL_PORT);
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log(
-  "EMAIL_PASS exists:",
-  !!process.env.EMAIL_PASS
-);
