@@ -21,14 +21,18 @@ model User {
 }
 
 model Repository {
-  id        Int      @id @default(autoincrement())
-  repoUrl   String
-  framework String?
-  status    String   @default("PENDING")
-  createdAt DateTime @default(now())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  scans     Scan[]
+  id           Int      @id @default(autoincrement())
+  repoUrl      String
+  framework    String?
+  language     String?
+  dependencies Json?
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+
+  scans        Scan[]
 }
 
 model Scan {

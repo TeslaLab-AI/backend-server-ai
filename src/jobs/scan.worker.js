@@ -1,132 +1,98 @@
 import { Worker } from "bullmq";
+import fs from "fs/promises";
+import path from "path";
 import prisma from "../config/prismaClient.js";
 
 import connection from "../config/redis.js";
 
-import { cloneRepository }
-  from "../services/git.service.js";
-
-import { scanPackageJson }
-  from "../services/scanner.service.js";
+import { cloneRepository } from "../services/git.service.js";
+import { scanRepository } from "../services/scanner.service.js";
 
 const worker = new Worker(
 
   "repo-scan",
 
   async (job) => {
+    const { repoUrl, repositoryId } = job.data;
+    let repoPath;
+    let scanRecord;
 
     try {
-
-      const { repoUrl } =
-        job.data;
-
-        const repository =
-  await prisma.repository.findFirst({
-
-    where: {
-      repoUrl
-    }
-
-  });
-
-let scanRecord = null;
-
-if (repository) {
-
-  scanRecord =
-    await prisma.scan.create({
-
-      data: {
-
-        repositoryId:
-          repository.id,
-
-        status:
-          "SCANNING"
-
-      }
-
-    });
-
-}
-
-      await prisma.repository.updateMany({
-
-        where: {
-          repoUrl
-        },
-
+      scanRecord = await prisma.scan.create({
         data: {
+          repositoryId,
           status: "SCANNING"
         }
-
       });
 
-      // repo name extract
-      const repoName =
-        repoUrl
-          .split("/")
-          .pop()
-          .replace(".git", "");
+      await prisma.repository.update({
+        where: { id: repositoryId },
+        data: { status: "SCANNING" }
+      });
 
-      // clone repo
-      const repoPath =
-        await cloneRepository(
+      const cleanUrl = repoUrl.replace(/\.git$/i, "");
+      const repoName = cleanUrl.split("/").pop();
+      repoPath = path.join("repos", `${repoName}-${Date.now()}`);
+
+      await cloneRepository(repoUrl, repoPath);
+      const scanResult = await scanRepository(repoPath);
+
+      const resultPayload = {
+        repository: {
           repoUrl,
-          repoName
-        );
+          language: scanResult.language,
+          framework: scanResult.framework
+        },
+        dependencies: scanResult.packages,
+        metadata: {
+          totalPackages: scanResult.totalPackages
+        }
+      };
 
-      // scan package.json
-      const result =
-        await scanPackageJson(
-          repoPath
-        );
+      await prisma.scan.update({
+        where: { id: scanRecord.id },
+        data: {
+          status: "COMPLETED",
+          result: resultPayload
+        }
+      });
 
-      console.log(
-        "Scan Result:",
-        result
-      );
+      await prisma.repository.update({
+        where: { id: repositoryId },
+        data: {
+          language: scanResult.language,
+          framework: scanResult.framework,
+          dependencies: resultPayload.dependencies,
+          status: "COMPLETED"
+        }
+      });
+    } catch (error) {
+      console.error("repo-scan worker error:", error);
 
       if (scanRecord) {
+        await prisma.scan.update({
+          where: { id: scanRecord.id },
+          data: {
+            status: "FAILED",
+            result: { error: error.message }
+          }
+        });
+      }
 
-  await prisma.scan.update({
-
-    where: {
-
-      id:
-        scanRecord.id
-
-    },
-
-    data: {
-
-      status:
-        "COMPLETED",
-
-      result
-
-    }
-
-  });
-
-}
-
-      await prisma.repository.updateMany({
-
-  where: {
-    repoUrl
-  },
-
-  data: {
-    status: "COMPLETED"
-  }
-
-});
-
-    } catch (error) {
-
-      console.log(error);
-
+      if (repositoryId) {
+        await prisma.repository.update({
+          where: { id: repositoryId },
+          data: { status: "FAILED" }
+        });
+      }
+    } finally {
+      if (repoPath) {
+        try {
+          await fs.rm(repoPath, { recursive: true, force: true });
+        } catch (cleanupError) {
+          console.error("repo-scan cleanup failed:", cleanupError);
+        }
+      }
     }
 
   },

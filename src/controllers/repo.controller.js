@@ -21,96 +21,58 @@ import { cloneRepository }
 // CONNECT REPOSITORY
 export const connectRepo =
   async (req, res) => {
-
     try {
+      const { repoUrl } = req.body;
 
-      const { repoUrl } =
-        req.body;
-
-      // fetch github repo
-      const repoData =
-        await getRepoDetails(
-          repoUrl
-        );
-
-      // detect framework
-      let framework =
-        "Unknown";
-
-      const language =
-        repoData.language;
-
-      if (
-        language ===
-        "JavaScript"
-      ) {
-        framework =
-          "Node.js";
-      }
-
-      if (
-        repoUrl.includes(
-          "react"
-        )
-      ) {
-        framework =
-          "React";
-      }
-
-      if (
-        repoUrl.includes(
-          "next"
-        )
-      ) {
-        framework =
-          "Next.js";
-      }
-
-      // save repo
-      const repository =
-        await prisma.repository.create({
-          data: {
-            repoUrl,
-            framework,
-            status: "PENDING",
-            userId:
-              req.userId
-          }
+      if (!repoUrl || typeof repoUrl !== "string") {
+        return res.status(400).json({
+          error: "repoUrl is required"
         });
+      }
+
+      const normalizedRepoUrl = repoUrl.replace(/\.git$/i, "");
+
+      const repoData = await getRepoDetails(normalizedRepoUrl);
+
+      const existingRepository = await prisma.repository.findFirst({
+        where: {
+          repoUrl: normalizedRepoUrl,
+          userId: req.userId
+        }
+      });
+
+      if (existingRepository) {
+        return res.status(409).json({
+          message: "Repository already connected",
+          repositoryId: existingRepository.id,
+          status: existingRepository.status
+        });
+      }
+
+      const repository = await prisma.repository.create({
+        data: {
+          repoUrl: normalizedRepoUrl,
+          status: "SCANNING",
+          userId: req.userId
+        }
+      });
+
+      await scanQueue.add("repo-scan", {
+        repoUrl: normalizedRepoUrl,
+        repositoryId: repository.id
+      });
 
       res.status(201).json({
-
-        message:
-          "Repository connected",
-
-        repository,
-
-        github: {
-
-          stars:
-            repoData.stargazers_count,
-
-          language:
-            repoData.language,
-
-          description:
-            repoData.description
-
-        }
-
+        message: "Repository connected. Scanning started.",
+        repositoryId: repository.id,
+        status: repository.status
       });
-
     } catch (error) {
-
-      console.log(error);
-
+      console.error("connectRepo error:", error);
       res.status(500).json({
-        error:
-          error.message
+        error: error.message
       });
-
     }
-
   };
 
 // GET USER REPOSITORIES

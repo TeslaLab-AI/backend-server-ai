@@ -7,9 +7,15 @@ export const cloneRepository =
   async (repoUrl, repoName) => {
 
     try {
+      if (!repoUrl || !repoName) {
+        throw new Error("Missing repository URL or target path");
+      }
 
       const repoPath =
-        `repos/${repoName}`;
+        repoName.includes("/") ||
+        repoName.includes("\\")
+          ? repoName
+          : `repos/${repoName}`;
 
       // repo already exists
       if (
