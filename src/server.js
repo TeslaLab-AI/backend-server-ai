@@ -25,7 +25,8 @@ app.use(cors({
     // "https://teslalab-ai.vercel.app" ,
   //  " https://authentication-czxg.vercel.app"
   "https://authentication-czxg-pj9erh9dm-teslalabs-projects.vercel.app",
-  "https://authentication-czxg.vercel.app"
+  "https://authentication-czxg.vercel.app",
+  "https://www.teslalab-ai.com/"
   ],
 
   credentials: true
