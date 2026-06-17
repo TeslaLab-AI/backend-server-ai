@@ -9,7 +9,15 @@ import {
   queueRepoScan,
   getRepositoryById,
   getRepositoryScans,
-  getRepositoryStatus
+  getRepositoryStatus,
+  getRepoTree,
+  readRepoFile,
+  saveRepoFile,
+  createRepoFile,
+  createRepoFolder,
+  deleteRepoFile,
+  deleteRepoFolder,
+  renameRepoPath
 } from "../controllers/repo.controller.js";
 
 import authMiddleware
@@ -46,14 +54,62 @@ router.get(
 router.post(
   "/ai-scan",
   authMiddleware,
-    premiumMiddleware,
+  premiumMiddleware,
   aiScanRepo
 );
 
 router.post(
   "/queue-scan",
-  // authMiddleware,
+  authMiddleware,
   queueRepoScan
+);
+
+router.get(
+  "/:id/tree",
+  authMiddleware,
+  getRepoTree
+);
+
+router.get(
+  "/:id/file",
+  authMiddleware,
+  readRepoFile
+);
+
+router.post(
+  "/:id/file/save",
+  authMiddleware,
+  saveRepoFile
+);
+
+router.post(
+  "/:id/file/create",
+  authMiddleware,
+  createRepoFile
+);
+
+router.post(
+  "/:id/folder/create",
+  authMiddleware,
+  createRepoFolder
+);
+
+router.delete(
+  "/:id/file",
+  authMiddleware,
+  deleteRepoFile
+);
+
+router.delete(
+  "/:id/folder",
+  authMiddleware,
+  deleteRepoFolder
+);
+
+router.patch(
+  "/:id/path/rename",
+  authMiddleware,
+  renameRepoPath
 );
 
 router.get(
@@ -61,7 +117,6 @@ router.get(
   authMiddleware,
   getRepositoryById
 );
-
 
 router.get(
   "/:id/scans",

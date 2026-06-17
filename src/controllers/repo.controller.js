@@ -1,3 +1,4 @@
+import path from "path";
 import prisma from "../config/prismaClient.js";
 
 import { getRepoDetails }
@@ -17,6 +18,16 @@ import scanQueue
 
 import { cloneRepository }
   from "../services/git.service.js";
+
+import {
+  buildTree,
+  createFile,
+  createFolder,
+  deletePath,
+  readFileContent,
+  renamePath,
+  writeFileContent
+} from "../services/workspace.service.js";
 
 // CONNECT REPOSITORY
 export const connectRepo =
@@ -57,15 +68,26 @@ export const connectRepo =
         }
       });
 
+      const repoName = normalizedRepoUrl.split("/").pop();
+      const repoPath = await cloneRepository(normalizedRepoUrl, repoName);
+
+      await prisma.repository.update({
+        where: { id: repository.id },
+        data: {
+          status: "READY"
+        }
+      });
+
       await scanQueue.add("repo-scan", {
         repoUrl: normalizedRepoUrl,
         repositoryId: repository.id
       });
 
       res.status(201).json({
-        message: "Repository connected. Scanning started.",
+        message: "Repository connected. Workspace ready.",
         repositoryId: repository.id,
-        status: repository.status
+        status: "READY",
+        repoPath
       });
     } catch (error) {
       console.error("connectRepo error:", error);
@@ -459,14 +481,22 @@ export const getRepositoryById =
     try {
 
       const repository =
-        await prisma.repository.findUnique({
+        await prisma.repository.findFirst({
           where: {
             id:
               Number(
                 req.params.id
-              )
+              ),
+            userId:
+              req.userId
           }
         });
+
+      if (!repository) {
+        return res.status(404).json({
+          message: "Repository not found"
+        });
+      }
 
       res.status(200).json({
         repository
@@ -509,6 +539,17 @@ export const getRepositoryScans =
           }
 
         });
+
+      const repository = await prisma.repository.findFirst({
+        where: {
+          id: Number(id),
+          userId: req.userId
+        }
+      });
+
+      if (!repository) {
+        return res.status(404).json({ message: "Repository not found" });
+      }
 
       res.status(200).json({
 
@@ -583,3 +624,222 @@ export const getRepositoryScans =
     }
 
   };
+
+export const getRepoTree = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    const tree = await buildTree(repoPath);
+
+    return res.status(200).json({ tree });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const readRepoFile = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { path: filePath } = req.query;
+    if (!filePath || typeof filePath !== "string") {
+      return res.status(400).json({ message: "file path is required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    const content = await readFileContent(repoPath, filePath);
+
+    return res.status(200).json({ filePath, content });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const saveRepoFile = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { path: filePath, content } = req.body;
+    if (!filePath || typeof filePath !== "string") {
+      return res.status(400).json({ message: "file path is required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    await writeFileContent(repoPath, filePath, content || "");
+
+    return res.status(200).json({ message: "File saved", filePath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const createRepoFile = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { path: filePath } = req.body;
+    if (!filePath || typeof filePath !== "string") {
+      return res.status(400).json({ message: "file path is required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    await createFile(repoPath, filePath);
+
+    return res.status(200).json({ message: "File created", filePath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const createRepoFolder = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { path: folderPath } = req.body;
+    if (!folderPath || typeof folderPath !== "string") {
+      return res.status(400).json({ message: "folder path is required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    await createFolder(repoPath, folderPath);
+
+    return res.status(200).json({ message: "Folder created", folderPath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteRepoFile = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { path: filePath } = req.query;
+    if (!filePath || typeof filePath !== "string") {
+      return res.status(400).json({ message: "file path is required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    await deletePath(repoPath, filePath);
+
+    return res.status(200).json({ message: "File deleted", filePath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteRepoFolder = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { path: folderPath } = req.query;
+    if (!folderPath || typeof folderPath !== "string") {
+      return res.status(400).json({ message: "folder path is required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    await deletePath(repoPath, folderPath);
+
+    return res.status(200).json({ message: "Folder deleted", folderPath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const renameRepoPath = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findFirst({
+      where: {
+        id: Number(req.params.id),
+        userId: req.userId
+      }
+    });
+
+    if (!repo) {
+      return res.status(404).json({ message: "Repository not found" });
+    }
+
+    const { oldPath, newPath } = req.body;
+    if (!oldPath || !newPath) {
+      return res.status(400).json({ message: "oldPath and newPath are required" });
+    }
+
+    const repoPath = path.resolve("repos", repo.repoUrl.split("/").pop());
+    await renamePath(repoPath, oldPath, newPath);
+
+    return res.status(200).json({ message: "Path renamed", oldPath, newPath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
