@@ -70,10 +70,14 @@ export const register = async (req, res) => {
 
     res.status(201).json({
 
-      message:
-        "User registered. OTP sent to email."
+    success: true,
 
-    });
+    email,
+
+    message:
+      "OTP sent successfully"
+
+});
 
     console.log("Step 3: Email Sent");
 
@@ -161,26 +165,12 @@ export const login = async (req, res) => {
     );
 
     // save token in cookie
-    res.cookie(
-
-      "token",
-
-      token,
-
-      {
-
-        httpOnly: true,
-
-        secure: false,
-
-        sameSite: "lax",
-
-        maxAge:
-          7 * 24 * 60 * 60 * 1000
-
-      }
-
-    );
+   res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+});
 
     // remove password
     const { password: _, ...safeUser } =
